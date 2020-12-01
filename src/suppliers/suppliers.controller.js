@@ -1,40 +1,38 @@
 const SuppliersService = require("./suppliers.service.js");
 
-function supplierExists(req, res, next) {
+async function supplierExists(req, res, next) {
   const error = { status: 404, message: `Supplier cannot be found.` };
   const { supplierId } = req.params;
   if (!supplierId) return next(error);
 
-  SuppliersService.getSupplierById(supplierId).then(supplier => {
-    if (!supplier) return next(error);
-    res.locals.supplier = supplier;
-    next();
-  });
+  let supplier = await SuppliersService.getSupplierById(supplierId);
+  if (!supplier) return next(error);
+  res.locals.supplier = supplier;
+  next();
 }
 
-function create(req, res, next) {
-  SuppliersService.createSupplier(req.body.data).then(newSupplier =>
-    res.status(201).json({ data: newSupplier })
-  );
+async function create(req, res, next) {
+  let newSupplier = await SuppliersService.createSupplier(req.body.data);
+  res.status(201).json({ data: newSupplier });
 }
 
-function update(req, res, next) {
+async function update(req, res, next) {
   const {
     supplier: { supplier_id: supplierId, ...supplier },
   } = res.locals;
   const updatedSupplier = { ...supplier, ...req.body.data };
 
-  SuppliersService.updateSupplierById(
+  const data = await SuppliersService.updateSupplierById(
     supplierId,
     updatedSupplier
-  ).then(updatedSupplier => res.json({ data: updatedSupplier }));
+  );
+  res.json({ data });
 }
 
-function destroy(req, res, next) {
+async function destroy(req, res, next) {
   const { supplier } = res.locals;
-  SuppliersService.deleteSupplierById(supplier.supplier_id).then(() =>
-    res.sendStatus(204)
-  );
+  await SuppliersService.deleteSupplierById(supplier.supplier_id);
+  res.sendStatus(204);
 }
 
 module.exports = {
